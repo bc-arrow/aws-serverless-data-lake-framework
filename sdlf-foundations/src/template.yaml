@@ -25,7 +25,7 @@ Parameters:
   pCustomSuffix:
     Description: Custom suffix for Octagon DynamoDB tables
     Type: String
-    Default: "{{resolve:ssm:/SDLF/CustomIdentifier}}"
+    Default: ""
   pEnvironment:
     Description: Environment name
     Type: String
@@ -358,7 +358,7 @@ Resources:
         !If
           - UseCustomBucketPrefix
           - !Sub "${pCustomBucketPrefix}-s3logs"
-          - !Sub "${pOrg}-${pDomain}-${pEnvironment}-${AWS::Region}-${AWS::AccountId}-s3logs"
+          - !Sub "${pOrg}-s3logs-${AWS::Region}-${AWS::AccountId}-${pEnvironment}"
       LifecycleConfiguration:
         Rules:
           - Id: InfrequentAccess
@@ -404,7 +404,7 @@ Resources:
                   !If
                     - UseCustomBucketPrefix
                     - !Sub "arn:${AWS::Partition}:s3:::${pCustomBucketPrefix}*"
-                    - !Sub "arn:${AWS::Partition}:s3:::${pOrg}-${pDomain}-${pEnvironment}-${AWS::Region}-${AWS::AccountId}*"
+                    - !Sub "arn:${AWS::Partition}:s3:::${pOrg}-${AWS::Region}-${AWS::AccountId}-${pEnvironment}*"
               StringEquals:
                 "aws:SourceAccount": !Sub ${AWS::AccountId}
 
@@ -434,9 +434,11 @@ Resources:
               - s3:PutObjectVersionTagging
               - s3:Abort*
             Resource:
+              - !Sub "arn:${AWS::Partition}:s3:::${rLandingZoneBucket}"
               - !Sub "arn:${AWS::Partition}:s3:::${rRawBucket}"
               - !Sub "arn:${AWS::Partition}:s3:::${rStageBucket}"
               - !Sub "arn:${AWS::Partition}:s3:::${rAnalyticsBucket}"
+              - !Sub "arn:${AWS::Partition}:s3:::${rLandingZoneBucket}/*"
               - !Sub "arn:${AWS::Partition}:s3:::${rRawBucket}/*"
               - !Sub "arn:${AWS::Partition}:s3:::${rStageBucket}/*"
               - !Sub "arn:${AWS::Partition}:s3:::${rAnalyticsBucket}/*"
@@ -463,14 +465,14 @@ Resources:
         !If
           - UseCustomBucketPrefix
           - !Sub "${pCustomBucketPrefix}-artifacts"
-          - !Sub "${pOrg}-${pDomain}-${pEnvironment}-${AWS::Region}-${AWS::AccountId}-artifacts"
+          - !Sub "${pOrg}-artifacts-${AWS::Region}-${AWS::AccountId}-${pEnvironment}"
       LoggingConfiguration:
         DestinationBucketName: !Ref rS3AccessLogsBucket
         LogFilePrefix:
           !If
             - UseCustomBucketPrefix
             - !Sub "${pCustomBucketPrefix}-artifacts"
-            - !Sub "${pOrg}-${pDomain}-${pEnvironment}-${AWS::Region}-${AWS::AccountId}-artifacts"
+            - !Sub "${pOrg}-artifacts-${AWS::Region}-${AWS::AccountId}-${pEnvironment}"
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - BucketKeyEnabled: True
@@ -502,6 +504,64 @@ Resources:
             Principal: "*"
 
   # To Enforce KMS encryption: https://aws.amazon.com/premiumsupport/knowledge-center/s3-bucket-store-kms-encrypted-objects/
+  rLandingZoneBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName:
+        !If
+          - UseCustomBucketPrefix
+          - !Sub "${pCustomBucketPrefix}-landingzone"
+          - !Sub "${pOrg}-landingzone-${AWS::Region}-${AWS::AccountId}-${pEnvironment}"
+      LoggingConfiguration:
+        DestinationBucketName: !Ref rS3AccessLogsBucket
+        LogFilePrefix:
+          !If
+            - UseCustomBucketPrefix
+            - !Sub "${pCustomBucketPrefix}-landingzone"
+            - !Sub "${pOrg}-landingzone-${AWS::Region}-${AWS::AccountId}-${pEnvironment}"
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - BucketKeyEnabled: True
+            ServerSideEncryptionByDefault:
+              KMSMasterKeyID: !Ref rKMSKey
+              SSEAlgorithm: aws:kms
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: True
+        BlockPublicPolicy: True
+        IgnorePublicAcls: True
+        RestrictPublicBuckets: True
+      VersioningConfiguration:
+        Status: Enabled
+      NotificationConfiguration:
+        EventBridgeConfiguration:
+          EventBridgeEnabled: true
+
+  rLandingZoneBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref rLandingZoneBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: AllowSSLRequestsOnly
+            Action: s3:*
+            Effect: Deny
+            Resource:
+              - !Sub arn:${AWS::Partition}:s3:::${rLandingZoneBucket}/*
+              - !Sub arn:${AWS::Partition}:s3:::${rLandingZoneBucket}
+            Condition:
+              Bool:
+                aws:SecureTransport: False
+            Principal: "*"
+
+  rLandingZoneBucketLakeFormationS3Registration:
+    Type: AWS::LakeFormation::Resource
+    DependsOn: rLakeFormationDataAccessRolePolicy
+    Properties:
+      ResourceArn: !Sub arn:${AWS::Partition}:s3:::${rLandingZoneBucket}/
+      RoleArn: !GetAtt rLakeFormationDataAccessRole.Arn
+      UseServiceLinkedRole: False
+
   rRawBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -509,14 +569,14 @@ Resources:
         !If
           - UseCustomBucketPrefix
           - !Sub "${pCustomBucketPrefix}-raw"
-          - !Sub "${pOrg}-${pDomain}-${pEnvironment}-${AWS::Region}-${AWS::AccountId}-raw"
+          - !Sub "${pOrg}-raw-${AWS::Region}-${AWS::AccountId}-${pEnvironment}"
       LoggingConfiguration:
         DestinationBucketName: !Ref rS3AccessLogsBucket
         LogFilePrefix:
           !If
             - UseCustomBucketPrefix
             - !Sub "${pCustomBucketPrefix}-raw"
-            - !Sub "${pOrg}-${pDomain}-${pEnvironment}-${AWS::Region}-${AWS::AccountId}-raw"
+            - !Sub "${pOrg}-raw-${AWS::Region}-${AWS::AccountId}-${pEnvironment}"
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - BucketKeyEnabled: True
@@ -567,14 +627,14 @@ Resources:
         !If
           - UseCustomBucketPrefix
           - !Sub "${pCustomBucketPrefix}-stage"
-          - !Sub "${pOrg}-${pDomain}-${pEnvironment}-${AWS::Region}-${AWS::AccountId}-stage"
+          - !Sub "${pOrg}-stage-${AWS::Region}-${AWS::AccountId}-${pEnvironment}"
       LoggingConfiguration:
         DestinationBucketName: !Ref rS3AccessLogsBucket
         LogFilePrefix:
           !If
             - UseCustomBucketPrefix
             - !Sub "${pCustomBucketPrefix}-stage"
-            - !Sub "${pOrg}-${pDomain}-${pEnvironment}-${AWS::Region}-${AWS::AccountId}-stage"
+            - !Sub "${pOrg}-stage-${AWS::Region}-${AWS::AccountId}-${pEnvironment}"
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - BucketKeyEnabled: True
@@ -625,14 +685,14 @@ Resources:
         !If
           - UseCustomBucketPrefix
           - !Sub "${pCustomBucketPrefix}-analytics"
-          - !Sub "${pOrg}-${pDomain}-${pEnvironment}-${AWS::Region}-${AWS::AccountId}-analytics"
+          - !Sub "${pOrg}-analytics-${AWS::Region}-${AWS::AccountId}-${pEnvironment}"
       LoggingConfiguration:
         DestinationBucketName: !Ref rS3AccessLogsBucket
         LogFilePrefix:
           !If
             - UseCustomBucketPrefix
             - !Sub "${pCustomBucketPrefix}-analytics"
-            - !Sub "${pOrg}-${pDomain}-${pEnvironment}-${AWS::Region}-${AWS::AccountId}-analytics"
+            - !Sub "${pOrg}-analytics-${AWS::Region}-${AWS::AccountId}-${pEnvironment}"
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - BucketKeyEnabled: True
@@ -683,14 +743,14 @@ Resources:
         !If
           - UseCustomBucketPrefix
           - !Sub "${pCustomBucketPrefix}-athena"
-          - !Sub "${pOrg}-${pDomain}-${pEnvironment}-${AWS::Region}-${AWS::AccountId}-athena"
+          - !Sub "${pOrg}-athena-${AWS::Region}-${AWS::AccountId}-${pEnvironment}"
       LoggingConfiguration:
         DestinationBucketName: !Ref rS3AccessLogsBucket
         LogFilePrefix:
           !If
             - UseCustomBucketPrefix
             - !Sub "${pCustomBucketPrefix}-athena"
-            - !Sub "${pOrg}-${pDomain}-${pEnvironment}-${AWS::Region}-${AWS::AccountId}-athena"
+            - !Sub "${pOrg}-athena-${AWS::Region}-${AWS::AccountId}-${pEnvironment}"
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - BucketKeyEnabled: True
@@ -776,6 +836,7 @@ Resources:
         detail:
           bucket:
             name:
+              - !Ref rLandingZoneBucket
               - !Ref rRawBucket
               - !Ref rStageBucket
               - !Ref rAnalyticsBucket
@@ -909,6 +970,13 @@ Resources:
       Type: String
       Value: !Ref rArtifactsBucket
       Description: Name of the Artifacts S3 bucket
+  rS3LandingZoneBucketSsm:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /SDLF2/S3/LandingZoneBucket
+      Type: String
+      Value: !Ref rLandingZoneBucket
+      Description: Name of the Landing Zone S3 bucket
   rS3CentralBucketSsm: # kept for backward compatibility
     Type: AWS::SSM::Parameter
     Properties:
@@ -1608,3 +1676,6 @@ Outputs:
   oS3ArtifactsBucket:
     Description: Name of the domain's Artifacts S3 bucket
     Value: !Ref rArtifactsBucket
+  oS3LandingZoneBucket:
+    Description: Name of the domain's Landing Zone S3 bucket
+    Value: !Ref rLandingZoneBucket
