@@ -264,7 +264,7 @@ class Foundations(Construct):
         ######## S3 #########
         ####### Access Logging Bucket ######
         access_logs_bucket_name = (
-            f"{p_org.value_as_string}-{p_domain.value_as_string}-{scope.region}-{scope.account}-s3logs"
+            f"{p_org.value_as_string}-s3logs-{scope.region}-{scope.account}"
         )
         access_logs_bucket_resource_name = "rS3AccessLogsBucket"
         self.access_logs_bucket = s3.Bucket(
@@ -302,7 +302,7 @@ class Foundations(Construct):
         )
 
         artifacts_bucket_name = (
-            f"{p_org.value_as_string}-{p_domain.value_as_string}-{scope.region}-{scope.account}-artifacts"
+            f"{p_org.value_as_string}-artifacts-{scope.region}-{scope.account}"
         )
         artifacts_bucket_resource_name = "rArtifactsBucket"
         artifacts_bucket = s3.Bucket(
@@ -321,29 +321,32 @@ class Foundations(Construct):
             artifacts_bucket_resource_name, "Name of the Artifacts S3 bucket", artifacts_bucket.bucket_name
         )
 
-        raw_bucket = self.data_bucket(
+        landingzone_bucket = self.data_bucket(
             p_org.value_as_string,
-            p_domain.value_as_string,
+            "landingzone",
             scope.region,
             scope.account,
+        )
+        raw_bucket = self.data_bucket(
+            p_org.value_as_string,
             "raw",
+            scope.region,
+            scope.account,
         )
         stage_bucket = self.data_bucket(
             p_org.value_as_string,
-            p_domain.value_as_string,
+            "stage",
             scope.region,
             scope.account,
-            "stage",
         )
         analytics_bucket = self.data_bucket(
             p_org.value_as_string,
-            p_domain.value_as_string,
+            "analytics",
             scope.region,
             scope.account,
-            "analytics",
         )
 
-        athena_bucket_name = f"{p_org.value_as_string}-{p_domain.value_as_string}-{scope.region}-{scope.account}-athena"
+        athena_bucket_name = f"{p_org.value_as_string}-athena-{scope.region}-{scope.account}"
         athena_bucket_resource_name = "rAthenaBucket"
         athena_bucket = s3.Bucket(
             self,
@@ -381,9 +384,11 @@ class Foundations(Construct):
                         "s3:Abort*",
                     ],
                     resources=[
+                        landingzone_bucket.bucket_arn,
                         raw_bucket.bucket_arn,
                         stage_bucket.bucket_arn,
                         analytics_bucket.bucket_arn,
+                        f"{landingzone_bucket.bucket_arn}/*",
                         f"{raw_bucket.bucket_arn}/*",
                         f"{stage_bucket.bucket_arn}/*",
                         f"{analytics_bucket.bucket_arn}/*",
@@ -464,6 +469,7 @@ class Foundations(Construct):
                 detail={
                     "bucket": {
                         "name": [
+                            landingzone_bucket.bucket_name,
                             raw_bucket.bucket_name,
                             stage_bucket.bucket_name,
                             analytics_bucket.bucket_name,
@@ -635,7 +641,7 @@ class Foundations(Construct):
         self.external_interface[resource_name] = value
 
     def data_bucket(self, org, domain, region, account, bucket_layer):
-        data_bucket_name = f"{org}-{domain}-{region}-{account}-{bucket_layer}"
+        data_bucket_name = f"{org}-{region}-{account}-{bucket_layer}"
         data_bucket_resource_name = f"r{bucket_layer.capitalize()}Bucket"
         data_bucket = s3.Bucket(
             self,
