@@ -17,6 +17,10 @@ Parameters:
     Description: Environment name
     Type: String
     Default: "{{resolve:ssm:/SDLF2/Misc/pEnv}}"
+  pLandingzoneBucket:
+    Description: The landing zone bucket for the solution
+    Type: String
+    Default: "{{resolve:ssm:/SDLF2/S3/LandingzoneBucket}}"
   pRawBucket:
     Description: The raw bucket for the solution
     Type: String
@@ -226,9 +230,9 @@ Resources:
       DatabaseInput: !If
         - NotUseLegacyTeam
         - Description: !Sub "${pDatasetName} metadata catalog"
-          Name: !Sub ${pOrg}_${pDomain}_${pEnvironment}_${pDatasetName}_stage
+          Name: !Sub ${pOrg}_${pEnvironment}_${pDatasetName}_stage
         - Description: !Sub "${pTeamName} team ${pDatasetName} metadata catalog"
-          Name: !Sub ${pOrg}_${pDomain}_${pEnvironment}_${pTeamName}_${pDatasetName}_db
+          Name: !Sub ${pOrg}_${pEnvironment}_${pTeamName}_${pDatasetName}_db
 
   rGlueDataCatalogSsm:
     Type: AWS::SSM::Parameter
@@ -252,13 +256,29 @@ Resources:
       Value: !Ref rGlueDataCatalog
       Description: !Sub "${pDatasetName} stage metadata catalog"
 
+  rLandingzoneGlueDataCatalog:
+    Type: AWS::Glue::Database
+    Properties:
+      CatalogId: !Ref AWS::AccountId
+      DatabaseInput:
+        Description: !Sub "${pDatasetName} landingzone metadata catalog"
+        Name: !Sub ${pOrg}_${pEnvironment}_${pDatasetName}_landingzone
+
+  rLandingzoneGlueDataCatalogSsm:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /SDLF/Glue/${pDatasetName}/LandingzoneDataCatalog
+      Type: String
+      Value: !Ref rLandingzoneGlueDataCatalog
+      Description: !Sub "${pDatasetName} landingzone metadata catalog"
+
   rRawGlueDataCatalog:
     Type: AWS::Glue::Database
     Properties:
       CatalogId: !Ref AWS::AccountId
       DatabaseInput:
         Description: !Sub "${pDatasetName} raw metadata catalog"
-        Name: !Sub ${pOrg}_${pDomain}_${pEnvironment}_${pDatasetName}_raw
+        Name: !Sub ${pOrg}_${pEnvironment}_${pDatasetName}_raw
 
   rRawGlueDataCatalogSsm:
     Type: AWS::SSM::Parameter
@@ -274,7 +294,7 @@ Resources:
       CatalogId: !Ref AWS::AccountId
       DatabaseInput:
         Description: !Sub "${pDatasetName} analytics metadata catalog"
-        Name: !Sub ${pOrg}_${pDomain}_${pEnvironment}_${pDatasetName}_analytics
+        Name: !Sub ${pOrg}_${pEnvironment}_${pDatasetName}_analytics
 
   rAnalyticsGlueDataCatalogSsm:
     Type: AWS::SSM::Parameter
@@ -419,6 +439,7 @@ Resources:
                   - s3:PutObject
                   - s3:PutObjectVersion
                 Resource:
+                  - !Sub arn:${AWS::Partition}:s3:::${pLandingzoneBucket}/${pS3Prefix}/*
                   - !Sub arn:${AWS::Partition}:s3:::${pRawBucket}/${pS3Prefix}/*
                   - !Sub arn:${AWS::Partition}:s3:::${pStageBucket}/${pS3Prefix}/*
                   - !Sub arn:${AWS::Partition}:s3:::${pAnalyticsBucket}/${pS3Prefix}/*
@@ -512,6 +533,59 @@ Resources:
         - !Sub "${pDatasetName} Glue crawler"
         - !Sub "${pTeamName} team ${pDatasetName} Glue crawler"
 
+  rLandingzoneGlueCrawler:
+    Type: AWS::Glue::Crawler
+    Properties:
+      Role: !If
+        - NotUseLegacyTeam
+        - !GetAtt rDatalakeCrawlerRole.Arn
+        - !Sub "{{resolve:ssm:/SDLF/IAM/${pTeamName}/CrawlerRoleArn}}"
+      CrawlerSecurityConfiguration: !If
+        - NotUseLegacyTeam
+        - !Sub sdlf-${pDatasetName}-glue-security-config # unfortunately AWS::Glue::SecurityConfiguration doesn't provide any return value
+        - !Sub "{{resolve:ssm:/SDLF/Glue/${pTeamName}/SecurityConfigurationId}}"
+      DatabaseName: !Ref rLandingzoneGlueDataCatalog
+      Name: !If
+        - NotUseLegacyTeam
+        - !Sub sdlf-${pDatasetName}-crawler-landingzone
+        - !Sub sdlf-${pTeamName}-${pDatasetName}-landingzone-crawler
+      Targets:
+        S3Targets:
+          - Path: !If
+            - NotUseLegacyTeam
+            - !Sub s3://${pLandingzoneBucket}/${pS3Prefix}
+            - !Sub s3://${pLandingzoneBucket}/${pTeamName}/${pDatasetName}
+
+  rLandingzoneGlueCrawlerLakeFormationPermissions:
+    Type: AWS::LakeFormation::Permissions
+    Properties:
+      DataLakePrincipal:
+        DataLakePrincipalIdentifier: !If
+          - NotUseLegacyTeam
+          - !GetAtt rDatalakeCrawlerRole.Arn
+          - !Sub "{{resolve:ssm:/SDLF/IAM/${pTeamName}/CrawlerRoleArn}}"
+      Permissions:
+        - CREATE_TABLE
+        - ALTER
+        - DROP
+      Resource:
+        DatabaseResource:
+          Name: !Ref rLandingzoneGlueDataCatalog
+
+  rLandingzoneGlueCrawlerSsm:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !If
+        - NotUseLegacyTeam
+        - !Sub /SDLF/Glue/${pDatasetName}/LandingzoneGlueCrawler
+        - !Sub /SDLF/Glue/${pTeamName}/${pDatasetName}/LandingzoneGlueCrawler
+      Type: String
+      Value: !Ref rLandingzoneGlueCrawler
+      Description: !If
+        - NotUseLegacyTeam
+        - !Sub "${pDatasetName} Landingzone Glue crawler"
+        - !Sub "${pTeamName} team ${pDatasetName} Landingzone Glue crawler"
+        
   rRawGlueCrawler:
     Type: AWS::Glue::Crawler
     Properties:
@@ -669,6 +743,18 @@ Resources:
               - !Sub ${pTeamName}
 
   ######## LAKEFORMATION PERMISSIONS #########
+  rLandingzoneLakeFormationPermissions:
+    Type: AWS::LakeFormation::Permissions
+    Condition: NotUseLegacyTeam
+    Properties:
+      DataLakePrincipal:
+        DataLakePrincipalIdentifier: !GetAtt rDatalakeCrawlerRole.Arn
+      Permissions:
+        - DATA_LOCATION_ACCESS
+      Resource:
+        DataLocationResource:
+          S3Resource: !Sub arn:${AWS::Partition}:s3:::${pLandingzoneBucket}/${pS3Prefix}/
+
   rRawLakeFormationPermissions:
     Type: AWS::LakeFormation::Permissions
     Condition: NotUseLegacyTeam
@@ -803,6 +889,7 @@ Resources:
               - s3:ListBucket
             Resource:
               - !Sub arn:${AWS::Partition}:s3:::${pArtifactsBucket}
+              - !Sub arn:${AWS::Partition}:s3:::${pLandingzoneBucket}
               - !Sub arn:${AWS::Partition}:s3:::${pRawBucket}
               - !Sub arn:${AWS::Partition}:s3:::${pStageBucket}
               - !Sub arn:${AWS::Partition}:s3:::${pAnalyticsBucket}
@@ -814,6 +901,7 @@ Resources:
               - s3:PutObject
             Resource:
               - !Sub arn:${AWS::Partition}:s3:::${pArtifactsBucket}/${pS3Prefix}/*
+              - !Sub arn:${AWS::Partition}:s3:::${pLandingzoneBucket}/${pS3Prefix}/*
               - !Sub arn:${AWS::Partition}:s3:::${pRawBucket}/${pS3Prefix}/*
               - !Sub arn:${AWS::Partition}:s3:::${pStageBucket}/${pS3Prefix}/*
               - !Sub arn:${AWS::Partition}:s3:::${pAnalyticsBucket}/${pS3Prefix}/*
@@ -918,11 +1006,11 @@ Resources:
               - glue:GetDataQualityRule*
             Resource:
               - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:catalog
-              - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/${pOrg}_${pDomain}_${pEnvironment}_${pDatasetName}_*
-              - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/${pOrg}_${pDomain}_${pEnvironment}_${pDatasetName}_*
+              - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/${pOrg}_${pEnvironment}_${pDatasetName}_*
+              - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/${pOrg}_${pEnvironment}_${pDatasetName}_*
               - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:crawler/sdlf-${pDatasetName}-*
               - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:job/sdlf-${pDatasetName}-*
-              - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:job/${pOrg}-${pDomain}-${pEnvironment}-${pDatasetName}-*
+              - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:job/${pOrg}-${pEnvironment}-${pDatasetName}-*
               - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:dataQualityRuleset/* # glue:StartDataQualityRuleRecommendationRun requires dataQualityRuleset/*
           - Effect: Allow
             Action:
