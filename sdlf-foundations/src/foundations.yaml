@@ -357,7 +357,7 @@ Resources:
       Description: Name of the Artifacts S3 bucket
 
   # To Enforce KMS encryption: https://aws.amazon.com/premiumsupport/knowledge-center/s3-bucket-store-kms-encrypted-objects/
-  rLandingZoneBucket:
+  rLandingzoneBucket:
     Type: AWS::S3::Bucket
     Properties:
       BucketName:
@@ -389,10 +389,10 @@ Resources:
         EventBridgeConfiguration:
           EventBridgeEnabled: true
 
-  rLandingZoneBucketPolicy:
+  rLandingzoneBucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
-      Bucket: !Ref rLandingZoneBucket
+      Bucket: !Ref rLandingzoneBucket
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -400,27 +400,27 @@ Resources:
             Action: s3:*
             Effect: Deny
             Resource:
-              - !Sub arn:${AWS::Partition}:s3:::${rLandingZoneBucket}/*
-              - !Sub arn:${AWS::Partition}:s3:::${rLandingZoneBucket}
+              - !Sub arn:${AWS::Partition}:s3:::${rLandingzoneBucket}/*
+              - !Sub arn:${AWS::Partition}:s3:::${rLandingzoneBucket}
             Condition:
               Bool:
                 aws:SecureTransport: False
             Principal: "*"
 
-  rLandingZoneBucketLakeFormationS3Registration:
+  rLandingzoneBucketLakeFormationS3Registration:
     Type: AWS::LakeFormation::Resource
     DependsOn: rLakeFormationDataAccessRolePolicy
     Properties:
-      ResourceArn: !Sub arn:${AWS::Partition}:s3:::${rLandingZoneBucket}/
+      ResourceArn: !Sub arn:${AWS::Partition}:s3:::${rLandingzoneBucket}/
       RoleArn: !GetAtt rLakeFormationDataAccessRole.Arn
       UseServiceLinkedRole: False
 
-  rS3LandingZoneBucketSsm:
+  rS3LandingzoneBucketSsm:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: !Sub /sdlf/storage/rLandingZoneBucket/${pDeploymentInstance}
+      Name: !Sub /sdlf/storage/rLandingzoneBucket/${pDeploymentInstance}
       Type: String
-      Value: !Ref rLandingZoneBucket
+      Value: !Ref rLandingzoneBucket
       Description: Name of the Landing Zone S3 bucket
 
   rRawBucket:
@@ -699,11 +699,11 @@ Resources:
               - s3:PutObjectVersionTagging
               - s3:Abort*
             Resource:
-              - !Sub "arn:${AWS::Partition}:s3:::${rLandingZoneBucket}"
+              - !Sub "arn:${AWS::Partition}:s3:::${rLandingzoneBucket}"
               - !Sub "arn:${AWS::Partition}:s3:::${rRawBucket}"
               - !Sub "arn:${AWS::Partition}:s3:::${rStageBucket}"
               - !Sub "arn:${AWS::Partition}:s3:::${rAnalyticsBucket}"
-              - !Sub "arn:${AWS::Partition}:s3:::${rLandingZoneBucket}/*"
+              - !Sub "arn:${AWS::Partition}:s3:::${rLandingzoneBucket}/*"
               - !Sub "arn:${AWS::Partition}:s3:::${rRawBucket}/*"
               - !Sub "arn:${AWS::Partition}:s3:::${rStageBucket}/*"
               - !Sub "arn:${AWS::Partition}:s3:::${rAnalyticsBucket}/*"
@@ -736,6 +736,6 @@ Outputs:
   oS3ArtifactsBucket:
     Description: Name of the domain's Artifacts S3 bucket
     Value: !Ref rArtifactsBucket
-  oS3LandingZoneBucket:
+  oS3LandingzoneBucket:
     Description: Name of the domain's Landing Zone S3 bucket
-    Value: !Ref rLandingZoneBucket
+    Value: !Ref rLandingzoneBucket
