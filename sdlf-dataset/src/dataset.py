@@ -50,7 +50,7 @@ class Dataset(Construct):
         # if arguments aren't specified, standard SDLF SSM parameters are checked instead
         # the jury is still out on the usage of CfnParameter(),
         # and there is still work to get the latest SSM parameter values as well as using a prefix to allow multiple deployments TODO
-        landingzone_bucket = landingzone_bucket or "{{resolve:ssm:/sdlf/storage/rLandingZoneBucket:1}}"
+        landingzone_bucket = landingzone_bucket or "{{resolve:ssm:/sdlf/storage/rLandingzoneBucket:1}}"
         raw_bucket = raw_bucket or "{{resolve:ssm:/sdlf/storage/rRawBucket:1}}"
         stage_bucket = stage_bucket or "{{resolve:ssm:/sdlf/storage/rStageBucket:1}}"
         analytics_bucket = analytics_bucket or "{{resolve:ssm:/sdlf/storage/rAnalyticsBucket:1}}"
