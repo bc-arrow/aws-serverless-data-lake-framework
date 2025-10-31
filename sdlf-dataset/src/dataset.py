@@ -36,6 +36,7 @@ class Dataset(Construct):
         s3_prefix: str,
         org: str = None,
         data_domain: str = None,
+        landingzone_bucket: str = None,
         raw_bucket: str = None,
         stage_bucket: str = None,
         analytics_bucket: str = None,
@@ -49,6 +50,7 @@ class Dataset(Construct):
         # if arguments aren't specified, standard SDLF SSM parameters are checked instead
         # the jury is still out on the usage of CfnParameter(),
         # and there is still work to get the latest SSM parameter values as well as using a prefix to allow multiple deployments TODO
+        landingzone_bucket = landingzone_bucket or "{{resolve:ssm:/sdlf/storage/rLandingZoneBucket:1}}"
         raw_bucket = raw_bucket or "{{resolve:ssm:/sdlf/storage/rRawBucket:1}}"
         stage_bucket = stage_bucket or "{{resolve:ssm:/sdlf/storage/rStageBucket:1}}"
         analytics_bucket = analytics_bucket or "{{resolve:ssm:/sdlf/storage/rAnalyticsBucket:1}}"
@@ -82,6 +84,14 @@ class Dataset(Construct):
             default=data_domain,
         )
         p_domain.override_logical_id("pDomain")
+        p_landingzonebucket = CfnParameter(
+            self,
+            "pLandingzoneBucket",
+            description="The landing zone bucket for the solution",
+            type="String",
+            default=landingzone_bucket,
+        )
+        p_landingzonebucket.override_logical_id("pLandingzoneBucket")
         p_rawbucket = CfnParameter(
             self,
             "pRawBucket",
@@ -401,6 +411,13 @@ class Dataset(Construct):
                     resources=[
                         scope.format_arn(
                             service="s3",
+                            resource=f"{p_landingzonebucket.value_as_string}/{p_s3prefix.value_as_string}/*",
+                            region="",
+                            account="",
+                            arn_format=ArnFormat.NO_RESOURCE_NAME,
+                        ),
+                        scope.format_arn(
+                            service="s3",
                             resource=f"{p_rawbucket.value_as_string}/{p_s3prefix.value_as_string}/*",
                             region="",
                             account="",
@@ -499,7 +516,16 @@ class Dataset(Construct):
         self.data_catalog(
             scope,
             p_org.value_as_string,
-            p_domain.value_as_string,
+            p_datasetname.value_as_string,
+            "landingzone",
+            p_landingzonebucket.value_as_string,
+            p_s3prefix.value_as_string,
+            lf_tag_pair_property,
+        )
+
+        self.data_catalog(
+            scope,
+            p_org.value_as_string,
             p_datasetname.value_as_string,
             "raw",
             p_rawbucket.value_as_string,
@@ -510,7 +536,6 @@ class Dataset(Construct):
         self.data_catalog(
             scope,
             p_org.value_as_string,
-            p_domain.value_as_string,
             p_datasetname.value_as_string,
             "stage",
             p_stagebucket.value_as_string,
@@ -521,7 +546,6 @@ class Dataset(Construct):
         self.data_catalog(
             scope,
             p_org.value_as_string,
-            p_domain.value_as_string,
             p_datasetname.value_as_string,
             "analytics",
             p_analyticsbucket.value_as_string,
@@ -659,6 +683,13 @@ class Dataset(Construct):
                         ),
                         scope.format_arn(
                             service="s3",
+                            resource=p_landingzonebucket.value_as_string,
+                            region="",
+                            account="",
+                            arn_format=ArnFormat.NO_RESOURCE_NAME,
+                        ),
+                        scope.format_arn(
+                            service="s3",
                             resource=p_rawbucket.value_as_string,
                             region="",
                             account="",
@@ -687,6 +718,13 @@ class Dataset(Construct):
                         scope.format_arn(
                             service="s3",
                             resource=f"{p_artifactsbucket.value_as_string}/{p_s3prefix.value_as_string}/*",
+                            region="",
+                            account="",
+                            arn_format=ArnFormat.NO_RESOURCE_NAME,
+                        ),
+                        scope.format_arn(
+                            service="s3",
+                            resource=f"{p_landingzonebucket.value_as_string}/{p_s3prefix.value_as_string}/*",
                             region="",
                             account="",
                             arn_format=ArnFormat.NO_RESOURCE_NAME,
@@ -834,13 +872,13 @@ class Dataset(Construct):
                             service="glue",
                             resource="database",
                             arn_format=ArnFormat.SLASH_RESOURCE_NAME,
-                            resource_name=f"{p_org.value_as_string}_{p_domain.value_as_string}_{p_datasetname.value_as_string}_*",
+                            resource_name=f"{p_org.value_as_string}_{p_datasetname.value_as_string}_*",
                         ),
                         scope.format_arn(
                             service="glue",
                             resource="table",
                             arn_format=ArnFormat.SLASH_RESOURCE_NAME,
-                            resource_name=f"{p_org.value_as_string}_{p_domain.value_as_string}_{p_datasetname.value_as_string}_*",
+                            resource_name=f"{p_org.value_as_string}_{p_datasetname.value_as_string}_*",
                         ),
                         scope.format_arn(
                             service="glue",
@@ -858,7 +896,7 @@ class Dataset(Construct):
                             service="glue",
                             resource="job",
                             arn_format=ArnFormat.SLASH_RESOURCE_NAME,
-                            resource_name=f"{p_org.value_as_string}-{p_domain.value_as_string}-{p_datasetname.value_as_string}-*",
+                            resource_name=f"{p_org.value_as_string}-{p_datasetname.value_as_string}-*",
                         ),
                         scope.format_arn(
                             service="glue",
@@ -1124,7 +1162,7 @@ class Dataset(Construct):
         glue_catalog = glue_a.Database(
             self,
             glue_catalog_resource_name,
-            database_name=f"{org}_{domain}_{dataset}_{bucket_layer}",
+            database_name=f"{org}_{dataset}_{bucket_layer}",
             description=f"{dataset} {bucket_layer} metadata catalog",
         )
         self._external_interface(
