@@ -51,7 +51,7 @@ Resources:
       Value: !Ref pDomain
       Description: Data domain name
 
-  rMainSsm:
+  rDefaultSsm:
     Type: AWS::SSM::Parameter
     Properties:
       Name: !Sub /sdlf/storage/${pDeploymentInstance}
