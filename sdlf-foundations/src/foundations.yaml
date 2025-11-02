@@ -51,6 +51,14 @@ Resources:
       Value: !Ref pDomain
       Description: Data domain name
 
+  rMainSsm:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub /sdlf/storage/${pDeploymentInstance}
+      Type: String
+      Value: !Ref pDomain
+      Description: Data domain name (short path)
+
   ######## LAKE FORMATION #########
   rDataLakeSettings:
     Type: AWS::LakeFormation::DataLakeSettings
