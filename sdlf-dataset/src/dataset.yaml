@@ -397,7 +397,7 @@ Resources:
         Name: !If
           - FetchFromStorageSsm
           - !Sub "{{resolve:ssm:/sdlf/storage/rOrganization/${pStorageDeploymentInstance}}}_{{resolve:ssm:/sdlf/storage/${pStorageDeploymentInstance}}}_${pDeploymentInstance}_landingzone"
-          - !Sub ${pOrg}_${pDeploymentInstance}_landingzone
+          - !Sub ${pOrg}_${pStorageDeploymentInstance}_landingzone
 
   rLandingzoneGlueDataCatalogSsm:
     Type: AWS::SSM::Parameter
@@ -462,6 +462,7 @@ Resources:
       Type: String
       Value: !Ref rLandingzoneGlueCrawler
       Description: !Sub "${pDeploymentInstance} Landingzone Glue crawler"
+      
   rRawGlueDataCatalog:
     Type: AWS::Glue::Database
     Properties:
@@ -471,7 +472,7 @@ Resources:
         Name: !If
           - FetchFromStorageSsm
           - !Sub "{{resolve:ssm:/sdlf/storage/rOrganization/${pStorageDeploymentInstance}}}_{{resolve:ssm:/sdlf/storage/${pStorageDeploymentInstance}}}_${pDeploymentInstance}_raw"
-          - !Sub ${pOrg}_${pDeploymentInstance}_raw
+          - !Sub ${pOrg}_${pStorageDeploymentInstance}_raw
 
   rRawGlueDataCatalogSsm:
     Type: AWS::SSM::Parameter
@@ -546,7 +547,7 @@ Resources:
         Name: !If
           - FetchFromStorageSsm
           - !Sub "{{resolve:ssm:/sdlf/storage/rOrganization/${pStorageDeploymentInstance}}}_{{resolve:ssm:/sdlf/storage/${pStorageDeploymentInstance}}}_${pDeploymentInstance}_stage"
-          - !Sub ${pOrg}_${pDeploymentInstance}_stage
+          - !Sub ${pOrg}_${pStorageDeploymentInstance}_stage
 
   rStageGlueDataCatalogSsm:
     Type: AWS::SSM::Parameter
@@ -621,7 +622,7 @@ Resources:
         Name: !If
           - FetchFromStorageSsm
           - !Sub "{{resolve:ssm:/sdlf/storage/rOrganization/${pStorageDeploymentInstance}}}_{{resolve:ssm:/sdlf/storage/${pStorageDeploymentInstance}}}_${pDeploymentInstance}_analytics"
-          - !Sub ${pOrg}_${pDeploymentInstance}_analytics
+          - !Sub ${pOrg}_${pStorageDeploymentInstance}_analytics
 
   rAnalyticsGlueDataCatalogSsm:
     Type: AWS::SSM::Parameter
