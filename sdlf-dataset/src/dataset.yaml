@@ -217,7 +217,7 @@ Resources:
             KmsKeyArn: !If
               - IsS3Prefix
               - !GetAtt rKMSDataKey.Arn
-              - !If [FetchFromStorageSsm, !Sub "{{resolve:ssm:/sdlf/storage/rKMSKey/${pStorageDeploymentInstance}}}", !Ref pBucketKey]
+              - !If [FetchFromStorageSsm, !Sub "arn:${AWS::Partition}:s3:::{{resolve:ssm:/sdlf/storage/rKMSKey/${pStorageDeploymentInstance}}}", !Ref pBucketKey]
 
   rGlueSecurityConfigurationSsm:
     Type: AWS::SSM::Parameter
@@ -356,9 +356,9 @@ Resources:
                   - IsS3Prefix
                   - - !GetAtt rKMSInfraKey.Arn
                     - !GetAtt rKMSDataKey.Arn
-                    - !If [FetchFromStorageSsm, !Sub "{{resolve:ssm:/sdlf/storage/rKMSKey/${pStorageDeploymentInstance}}}", !Ref pBucketKey]
+                    - !If [FetchFromStorageSsm, !Sub "arn:${AWS::Partition}:s3:::{{resolve:ssm:/sdlf/storage/rKMSKey/${pStorageDeploymentInstance}}}", !Ref pBucketKey]
                   - - !GetAtt rKMSInfraKey.Arn
-                    - !If [FetchFromStorageSsm, !Sub "{{resolve:ssm:/sdlf/storage/rKMSKey/${pStorageDeploymentInstance}}}", !Ref pBucketKey]
+                    - !If [FetchFromStorageSsm, !Sub "arn:${AWS::Partition}:s3:::{{resolve:ssm:/sdlf/storage/rKMSKey/${pStorageDeploymentInstance}}}", !Ref pBucketKey]
               - Effect: Allow
                 Action:
                   - lakeformation:GetDataAccess # W11 exception
@@ -396,7 +396,7 @@ Resources:
         Description: !Sub "${pDeploymentInstance} landingzone metadata catalog"
         Name: !If
           - FetchFromStorageSsm
-          - !Sub "{{resolve:ssm:/sdlf/storage/rOrganization/${pStorageDeploymentInstance}}}_${pDeploymentInstance}_landingzone"
+          - !Sub "{{resolve:ssm:/sdlf/storage/rOrganization/${pStorageDeploymentInstance}}}_{{resolve:ssm:/sdlf/storage/${pStorageDeploymentInstance}}}_${pDeploymentInstance}_landingzone"
           - !Sub ${pOrg}_${pDeploymentInstance}_landingzone
 
   rLandingzoneGlueDataCatalogSsm:
@@ -462,7 +462,6 @@ Resources:
       Type: String
       Value: !Ref rLandingzoneGlueCrawler
       Description: !Sub "${pDeploymentInstance} Landingzone Glue crawler"
-
   rRawGlueDataCatalog:
     Type: AWS::Glue::Database
     Properties:
@@ -471,7 +470,7 @@ Resources:
         Description: !Sub "${pDeploymentInstance} raw metadata catalog"
         Name: !If
           - FetchFromStorageSsm
-          - !Sub "{{resolve:ssm:/sdlf/storage/rOrganization/${pStorageDeploymentInstance}}}_${pDeploymentInstance}_raw"
+          - !Sub "{{resolve:ssm:/sdlf/storage/rOrganization/${pStorageDeploymentInstance}}}_{{resolve:ssm:/sdlf/storage/${pStorageDeploymentInstance}}}_${pDeploymentInstance}_raw"
           - !Sub ${pOrg}_${pDeploymentInstance}_raw
 
   rRawGlueDataCatalogSsm:
@@ -546,7 +545,7 @@ Resources:
         Description: !Sub "${pDeploymentInstance} stage metadata catalog"
         Name: !If
           - FetchFromStorageSsm
-          - !Sub "{{resolve:ssm:/sdlf/storage/rOrganization/${pStorageDeploymentInstance}}}_${pDeploymentInstance}_stage"
+          - !Sub "{{resolve:ssm:/sdlf/storage/rOrganization/${pStorageDeploymentInstance}}}_{{resolve:ssm:/sdlf/storage/${pStorageDeploymentInstance}}}_${pDeploymentInstance}_stage"
           - !Sub ${pOrg}_${pDeploymentInstance}_stage
 
   rStageGlueDataCatalogSsm:
@@ -621,7 +620,7 @@ Resources:
         Description: !Sub "${pDeploymentInstance} analytics metadata catalog"
         Name: !If
           - FetchFromStorageSsm
-          - !Sub "{{resolve:ssm:/sdlf/storage/rOrganization/${pStorageDeploymentInstance}}}_${pDeploymentInstance}_analytics"
+          - !Sub "{{resolve:ssm:/sdlf/storage/rOrganization/${pStorageDeploymentInstance}}}_{{resolve:ssm:/sdlf/storage/${pStorageDeploymentInstance}}}_${pDeploymentInstance}_analytics"
           - !Sub ${pOrg}_${pDeploymentInstance}_analytics
 
   rAnalyticsGlueDataCatalogSsm:
@@ -830,9 +829,9 @@ Resources:
               - IsS3Prefix
               - - !GetAtt rKMSInfraKey.Arn
                 - !GetAtt rKMSDataKey.Arn
-                - !If [FetchFromStorageSsm, !Sub "{{resolve:ssm:/sdlf/storage/rKMSKey/${pStorageDeploymentInstance}}}", !Ref pBucketKey]
+                - !If [FetchFromStorageSsm, !Sub "arn:${AWS::Partition}:s3:::{{resolve:ssm:/sdlf/storage/rKMSKey/${pStorageDeploymentInstance}}}", !Ref pBucketKey]
               - - !GetAtt rKMSInfraKey.Arn
-                - !If [FetchFromStorageSsm, !Sub "{{resolve:ssm:/sdlf/storage/rKMSKey/${pStorageDeploymentInstance}}}", !Ref pBucketKey]
+                - !If [FetchFromStorageSsm, !Sub "arn:${AWS::Partition}:s3:::{{resolve:ssm:/sdlf/storage/rKMSKey/${pStorageDeploymentInstance}}}", !Ref pBucketKey]
           - Effect: Allow
             Action:
               - ssm:GetParameter
@@ -896,15 +895,15 @@ Resources:
               - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:catalog
               - !If
                 - FetchFromStorageSsm
-                - !Sub "arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/{{resolve:ssm:/sdlf/storage/rOrganization/${pStorageDeploymentInstance}}}_${pDeploymentInstance}_*"
+                - !Sub "arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/{{resolve:ssm:/sdlf/storage/rOrganization/${pStorageDeploymentInstance}}}_{{resolve:ssm:/sdlf/storage/${pStorageDeploymentInstance}}}_${pDeploymentInstance}_*"
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/${pOrg}_${pDeploymentInstance}_*
               - !If
                 - FetchFromStorageSsm
-                - !Sub "arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/{{resolve:ssm:/sdlf/storage/rOrganization/${pStorageDeploymentInstance}}}_${pDeploymentInstance}_*"
+                - !Sub "arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/{{resolve:ssm:/sdlf/storage/rOrganization/${pStorageDeploymentInstance}}}_{{resolve:ssm:/sdlf/storage/${pStorageDeploymentInstance}}}_${pDeploymentInstance}_*"
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/${pOrg}_${pDeploymentInstance}_*
               - !If
                 - FetchFromStorageSsm
-                - !Sub "arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:job/{{resolve:ssm:/sdlf/storage/rOrganization/${pStorageDeploymentInstance}}}-${pDeploymentInstance}_*"
+                - !Sub "arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:job/{{resolve:ssm:/sdlf/storage/rOrganization/${pStorageDeploymentInstance}}}-{{resolve:ssm:/sdlf/storage/${pStorageDeploymentInstance}}}-${pDeploymentInstance}_*"
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:job/${pOrg}-${pDeploymentInstance}-*
               - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:crawler/sdlf-${pDeploymentInstance}-*
               - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:job/sdlf-${pDeploymentInstance}-*
