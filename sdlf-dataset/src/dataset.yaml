@@ -217,7 +217,7 @@ Resources:
             KmsKeyArn: !If
               - IsS3Prefix
               - !GetAtt rKMSDataKey.Arn
-              - !If [FetchFromStorageSsm, !Sub "arn:${AWS::Partition}:s3:::{{resolve:ssm:/sdlf/storage/rKMSKey/${pStorageDeploymentInstance}}}", !Ref pBucketKey]
+              - !If [FetchFromStorageSsm, !Sub "{{resolve:ssm:/sdlf/storage/rKMSKey/${pStorageDeploymentInstance}}}", !Ref pBucketKey]
 
   rGlueSecurityConfigurationSsm:
     Type: AWS::SSM::Parameter
@@ -356,9 +356,9 @@ Resources:
                   - IsS3Prefix
                   - - !GetAtt rKMSInfraKey.Arn
                     - !GetAtt rKMSDataKey.Arn
-                    - !If [FetchFromStorageSsm, !Sub "arn:${AWS::Partition}:s3:::{{resolve:ssm:/sdlf/storage/rKMSKey/${pStorageDeploymentInstance}}}", !Ref pBucketKey]
+                    - !If [FetchFromStorageSsm, !Sub "{{resolve:ssm:/sdlf/storage/rKMSKey/${pStorageDeploymentInstance}}}", !Ref pBucketKey]
                   - - !GetAtt rKMSInfraKey.Arn
-                    - !If [FetchFromStorageSsm, !Sub "arn:${AWS::Partition}:s3:::{{resolve:ssm:/sdlf/storage/rKMSKey/${pStorageDeploymentInstance}}}", !Ref pBucketKey]
+                    - !If [FetchFromStorageSsm, !Sub "{{resolve:ssm:/sdlf/storage/rKMSKey/${pStorageDeploymentInstance}}}", !Ref pBucketKey]
               - Effect: Allow
                 Action:
                   - lakeformation:GetDataAccess # W11 exception
@@ -830,9 +830,9 @@ Resources:
               - IsS3Prefix
               - - !GetAtt rKMSInfraKey.Arn
                 - !GetAtt rKMSDataKey.Arn
-                - !If [FetchFromStorageSsm, !Sub "arn:${AWS::Partition}:s3:::{{resolve:ssm:/sdlf/storage/rKMSKey/${pStorageDeploymentInstance}}}", !Ref pBucketKey]
+                - !If [FetchFromStorageSsm, !Sub "{{resolve:ssm:/sdlf/storage/rKMSKey/${pStorageDeploymentInstance}}}", !Ref pBucketKey]
               - - !GetAtt rKMSInfraKey.Arn
-                - !If [FetchFromStorageSsm, !Sub "arn:${AWS::Partition}:s3:::{{resolve:ssm:/sdlf/storage/rKMSKey/${pStorageDeploymentInstance}}}", !Ref pBucketKey]
+                - !If [FetchFromStorageSsm, !Sub "{{resolve:ssm:/sdlf/storage/rKMSKey/${pStorageDeploymentInstance}}}", !Ref pBucketKey]
           - Effect: Allow
             Action:
               - ssm:GetParameter
