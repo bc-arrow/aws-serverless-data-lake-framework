@@ -396,8 +396,8 @@ Resources:
         Description: !Sub "${pDeploymentInstance} landingzone metadata catalog"
         Name: !If
           - FetchFromStorageSsm
-          - !Sub "{{resolve:ssm:/sdlf/storage/rOrganization/${pStorageDeploymentInstance}}}_{{resolve:ssm:/sdlf/storage/${pStorageDeploymentInstance}}}_${pDeploymentInstance}_landingzone"
-          - !Sub ${pOrg}_${pStorageDeploymentInstance}_landingzone
+          - !Sub "{{resolve:ssm:/sdlf/storage/rOrganization/${pStorageDeploymentInstance}}}_${pDeploymentInstance}_landingzone"
+          - !Sub ${pOrg}_${pDeploymentInstance}_landingzone
 
   rLandingzoneGlueDataCatalogSsm:
     Type: AWS::SSM::Parameter
@@ -462,7 +462,7 @@ Resources:
       Type: String
       Value: !Ref rLandingzoneGlueCrawler
       Description: !Sub "${pDeploymentInstance} Landingzone Glue crawler"
-      
+
   rRawGlueDataCatalog:
     Type: AWS::Glue::Database
     Properties:
@@ -471,8 +471,8 @@ Resources:
         Description: !Sub "${pDeploymentInstance} raw metadata catalog"
         Name: !If
           - FetchFromStorageSsm
-          - !Sub "{{resolve:ssm:/sdlf/storage/rOrganization/${pStorageDeploymentInstance}}}_{{resolve:ssm:/sdlf/storage/${pStorageDeploymentInstance}}}_${pDeploymentInstance}_raw"
-          - !Sub ${pOrg}_${pStorageDeploymentInstance}_raw
+          - !Sub "{{resolve:ssm:/sdlf/storage/rOrganization/${pStorageDeploymentInstance}}}_${pDeploymentInstance}_raw"
+          - !Sub ${pOrg}_${pDeploymentInstance}_raw
 
   rRawGlueDataCatalogSsm:
     Type: AWS::SSM::Parameter
@@ -546,8 +546,8 @@ Resources:
         Description: !Sub "${pDeploymentInstance} stage metadata catalog"
         Name: !If
           - FetchFromStorageSsm
-          - !Sub "{{resolve:ssm:/sdlf/storage/rOrganization/${pStorageDeploymentInstance}}}_{{resolve:ssm:/sdlf/storage/${pStorageDeploymentInstance}}}_${pDeploymentInstance}_stage"
-          - !Sub ${pOrg}_${pStorageDeploymentInstance}_stage
+          - !Sub "{{resolve:ssm:/sdlf/storage/rOrganization/${pStorageDeploymentInstance}}}_${pDeploymentInstance}_stage"
+          - !Sub ${pOrg}_${pDeploymentInstance}_stage
 
   rStageGlueDataCatalogSsm:
     Type: AWS::SSM::Parameter
@@ -621,8 +621,8 @@ Resources:
         Description: !Sub "${pDeploymentInstance} analytics metadata catalog"
         Name: !If
           - FetchFromStorageSsm
-          - !Sub "{{resolve:ssm:/sdlf/storage/rOrganization/${pStorageDeploymentInstance}}}_{{resolve:ssm:/sdlf/storage/${pStorageDeploymentInstance}}}_${pDeploymentInstance}_analytics"
-          - !Sub ${pOrg}_${pStorageDeploymentInstance}_analytics
+          - !Sub "{{resolve:ssm:/sdlf/storage/rOrganization/${pStorageDeploymentInstance}}}_${pDeploymentInstance}_analytics"
+          - !Sub ${pOrg}_${pDeploymentInstance}_analytics
 
   rAnalyticsGlueDataCatalogSsm:
     Type: AWS::SSM::Parameter
@@ -896,15 +896,15 @@ Resources:
               - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:catalog
               - !If
                 - FetchFromStorageSsm
-                - !Sub "arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/{{resolve:ssm:/sdlf/storage/rOrganization/${pStorageDeploymentInstance}}}_{{resolve:ssm:/sdlf/storage/${pStorageDeploymentInstance}}}_${pDeploymentInstance}_*"
+                - !Sub "arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/{{resolve:ssm:/sdlf/storage/rOrganization/${pStorageDeploymentInstance}}}_${pDeploymentInstance}_*"
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:database/${pOrg}_${pDeploymentInstance}_*
               - !If
                 - FetchFromStorageSsm
-                - !Sub "arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/{{resolve:ssm:/sdlf/storage/rOrganization/${pStorageDeploymentInstance}}}_{{resolve:ssm:/sdlf/storage/${pStorageDeploymentInstance}}}_${pDeploymentInstance}_*"
+                - !Sub "arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/{{resolve:ssm:/sdlf/storage/rOrganization/${pStorageDeploymentInstance}}}_${pDeploymentInstance}_*"
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:table/${pOrg}_${pDeploymentInstance}_*
               - !If
                 - FetchFromStorageSsm
-                - !Sub "arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:job/{{resolve:ssm:/sdlf/storage/rOrganization/${pStorageDeploymentInstance}}}-{{resolve:ssm:/sdlf/storage/${pStorageDeploymentInstance}}}-${pDeploymentInstance}_*"
+                - !Sub "arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:job/{{resolve:ssm:/sdlf/storage/rOrganization/${pStorageDeploymentInstance}}}-${pDeploymentInstance}_*"
                 - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:job/${pOrg}-${pDeploymentInstance}-*
               - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:crawler/sdlf-${pDeploymentInstance}-*
               - !Sub arn:${AWS::Partition}:glue:${AWS::Region}:${AWS::AccountId}:job/sdlf-${pDeploymentInstance}-*
