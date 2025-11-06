@@ -504,6 +504,18 @@ Resources:
       Targets:
         S3Targets:
           - Path: !If [FetchFromStorageSsm, !Sub "s3://{{resolve:ssm:/sdlf/storage/rRawBucket/${pStorageDeploymentInstance}}}/${pS3Prefix}", !Sub "s3://${pRawBucket}/${pS3Prefix}"]
+      Configuration: |
+        {
+          "Version": 1.0,
+          "Grouping": {
+            "TableLevel": 4
+          },
+          "CrawlerOutput": {
+            "Tables": {
+              "AddOrUpdateBehavior": "MergeNewColumns"
+            }
+          }
+        }
 
   rRawGlueCrawlerGlueLakeFormationPermissions:
     Type: AWS::LakeFormation::Permissions
@@ -579,6 +591,18 @@ Resources:
       Targets:
         S3Targets:
           - Path: !If [FetchFromStorageSsm, !Sub "s3://{{resolve:ssm:/sdlf/storage/rStageBucket/${pStorageDeploymentInstance}}}/${pS3Prefix}", !Sub "s3://${pStageBucket}/${pS3Prefix}"]
+      Configuration: |
+        {
+          "Version": 1.0,
+          "Grouping": {
+            "TableLevel": 4
+          },
+          "CrawlerOutput": {
+            "Tables": {
+              "AddOrUpdateBehavior": "MergeNewColumns"
+            }
+          }
+        }
 
   rStageGlueCrawlerGlueLakeFormationPermissions:
     Type: AWS::LakeFormation::Permissions
@@ -654,6 +678,18 @@ Resources:
       Targets:
         S3Targets:
           - Path: !If [FetchFromStorageSsm, !Sub "s3://{{resolve:ssm:/sdlf/storage/rAnalyticsBucket/${pStorageDeploymentInstance}}}/${pS3Prefix}", !Sub "s3://${pAnalyticsBucket}/${pS3Prefix}"]
+      Configuration: |
+        {
+          "Version": 1.0,
+          "Grouping": {
+            "TableLevel": 4
+          },
+          "CrawlerOutput": {
+            "Tables": {
+              "AddOrUpdateBehavior": "MergeNewColumns"
+            }
+          }
+        }
 
   rAnalyticsGlueCrawlerGlueLakeFormationPermissions:
     Type: AWS::LakeFormation::Permissions
