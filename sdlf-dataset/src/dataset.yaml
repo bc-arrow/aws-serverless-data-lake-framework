@@ -397,7 +397,7 @@ Resources:
         Name: !If
           - FetchFromStorageSsm
           - !Sub "{{resolve:ssm:/sdlf/storage/rOrganization/${pStorageDeploymentInstance}}}_${pDeploymentInstance}_landingzone"
-          - !Sub ${pOrg}_${pDeploymentInstance}_landingzone
+          - !Sub ${pOrg}_${pDomain}_landingzone
 
   rLandingzoneGlueDataCatalogSsm:
     Type: AWS::SSM::Parameter
