@@ -502,6 +502,18 @@ Resources:
             - NotUseLegacyTeam
             - !Sub s3://${pStageBucket}/${pS3Prefix}
             - !Sub s3://${pStageBucket}/post-stage/${pTeamName}/${pDatasetName}
+      Configuration: |
+        {
+          "Version": 1.0,
+          "Grouping": {
+            "TableLevel": 4
+          },
+          "CrawlerOutput": {
+            "Tables": {
+              "AddOrUpdateBehavior": "MergeNewColumns"
+            }
+          }
+        }
 
   rGlueCrawlerLakeFormationPermissions:
     Type: AWS::LakeFormation::Permissions
@@ -608,6 +620,18 @@ Resources:
             - NotUseLegacyTeam
             - !Sub s3://${pRawBucket}/${pS3Prefix}
             - !Sub s3://${pRawBucket}/${pTeamName}/${pDatasetName}
+      Configuration: |
+        {
+          "Version": 1.0,
+          "Grouping": {
+            "TableLevel": 4
+          },
+          "CrawlerOutput": {
+            "Tables": {
+              "AddOrUpdateBehavior": "MergeNewColumns"
+            }
+          }
+        }
 
   rRawGlueCrawlerLakeFormationPermissions:
     Type: AWS::LakeFormation::Permissions
@@ -661,6 +685,18 @@ Resources:
             - NotUseLegacyTeam
             - !Sub s3://${pAnalyticsBucket}/${pS3Prefix}
             - !Sub s3://${pAnalyticsBucket}/${pTeamName}/${pDatasetName}
+      Configuration: |
+        {
+          "Version": 1.0,
+          "Grouping": {
+            "TableLevel": 4
+          },
+          "CrawlerOutput": {
+            "Tables": {
+              "AddOrUpdateBehavior": "MergeNewColumns"
+            }
+          }
+        }
 
   rAnalyticsGlueCrawlerLakeFormationPermissions:
     Type: AWS::LakeFormation::Permissions
