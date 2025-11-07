@@ -1,0 +1,18 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: SDLF Glue Data Catalog in datalake domain, dev environment
+
+Parameters:
+  pPipelineReference:
+    Type: String
+    Default: none
+
+Resources:
+  rCatalog:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "{{resolve:ssm:/sdlf/dataset/main}}"
+      Parameters:
+        pPipelineReference: !Ref pPipelineReference
+        pS3Prefix: marketdata
+        pDeploymentInstance: marketdata
+        pStorageDeploymentInstance: dev
