@@ -1,0 +1,20 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: SDLF Foundations in datalake domain, prod environment
+
+Parameters:
+    pPipelineReference:
+        Type: String
+        Default: none
+
+Resources:
+  rAnycompany:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "{{resolve:ssm:/sdlf/foundations/main}}"
+      Parameters:
+        pPipelineReference: !Ref pPipelineReference
+        pChildAccountId: !Ref AWS::AccountId
+        pOrg: arrow
+        pDomain: main
+        pDeploymentInstance: prod
+        pCicdRole: DeveloperReadOnlyRole
